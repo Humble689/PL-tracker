@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Premier League Stats Tracker</title>
+</head>
+<body>
+    <h1>Premier League Matches</h1>
+    <nav>
+        <a href="/update">Update Data from URL</a> | 
+        <a href="/predict">Predict Outcomes</a>
+    </nav>
+    <br>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Date</th>
+            <th>Home Team</th>
+            <th>Away Team</th>
+            <th>Score</th>
+            <th>Home Form</th>
+            <th>Away Form</th>
+        </tr>
+        {% for match in matches %}
+        <tr>
+            <td>{{ match[1] }}</td>
+            <td>{{ match[2] }}</td>
+            <td>{{ match[3] }}</td>
+            <td>{{ match[4] }} - {{ match[5] }}</td>
+            <td>{{ match[6] }}</td>
+            <td>{{ match[7] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+</body>
+</html>
