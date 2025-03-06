@@ -1,5 +1,6 @@
 CREATE DATABASE premier_league_stats;
 USE premier_league_stats;
+
 -- Table to store teams
 CREATE TABLE Teams (
     TeamID INT AUTO_INCREMENT PRIMARY KEY,
@@ -7,7 +8,6 @@ CREATE TABLE Teams (
     ShortName VARCHAR(3) NOT NULL,
     Rank INT
 );
-
 
 -- Table to store players
 CREATE TABLE Players (
@@ -30,8 +30,6 @@ CREATE TABLE Matches (
     AwayTeamRank INT,
     Result VARCHAR(10),
     MatchDate DATE,
-
-
     FOREIGN KEY (HomeTeamID) REFERENCES Teams(TeamID),
     FOREIGN KEY (AwayTeamID) REFERENCES Teams(TeamID)
 );

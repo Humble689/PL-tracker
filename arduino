@@ -1,0 +1,7 @@
+football_project/
+├── app.py
+├── config.py
+├── requirements.txt
+└── templates
+    ├── index.html
+    └── predictions.html

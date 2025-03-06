@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Match Predictions</title>
+    <title>Premier League Matches</title>
 </head>
 <body>
-    <h1>Upcoming Match Predictions</h1>
-    <p><a href="{{ url_for('index') }}">Home</a></p>
+    <h1>All Matches</h1>
+    <p>
+        <a href="{{ url_for('update') }}">Update Data</a> |
+        <a href="{{ url_for('predict') }}">View Predictions</a>
+    </p>
     <table border="1" cellpadding="5" cellspacing="0">
         <thead>
             <tr>
@@ -14,8 +17,10 @@
                 <th>Season</th>
                 <th>HomeTeamID</th>
                 <th>AwayTeamID</th>
+                <th>HomeGoals</th>
+                <th>AwayGoals</th>
+                <th>Result</th>
                 <th>MatchDate</th>
-                <th>Prediction</th>
             </tr>
         </thead>
         <tbody>
@@ -25,8 +30,10 @@
                 <td>{{ match.Season }}</td>
                 <td>{{ match.HomeTeamID }}</td>
                 <td>{{ match.AwayTeamID }}</td>
+                <td>{{ match.HomeGoals }}</td>
+                <td>{{ match.AwayGoals }}</td>
+                <td>{{ match.Result }}</td>
                 <td>{{ match.MatchDate }}</td>
-                <td>{{ match.Prediction }}</td>
             </tr>
             {% endfor %}
         </tbody>
