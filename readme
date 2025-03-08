@@ -1,0 +1,34 @@
+# Premier League Match Predictor
+
+## Description
+This project is a Flask web application that fetches real match data from the Football-Data.org API for the English Premier League. It allows users to view scheduled matches, update match data, and see predictions for upcoming matches based on dummy prediction logic.
+
+## Features
+- Fetches scheduled match data from the Football-Data.org API.
+- Displays all matches in a user-friendly table format.
+- Provides an option to update match data.
+- Displays predictions for upcoming matches.
+
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd <repository-directory>
+   ```
+2. Install the required packages:
+   ```bash
+   pip install -r requirement.txt
+   ```
+
+## Usage
+1. Run the application:
+   ```bash
+   python app.py
+   ```
+2. Open your web browser and navigate to `http://127.0.0.1:5000/` to view the application.
+
+## API Integration
+This application integrates with the Football-Data.org API to fetch match data. You will need to sign up for an API key and configure it in the `config.py` file.
+
+## License
+This project is licensed under the MIT License.
