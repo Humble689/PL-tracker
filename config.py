@@ -8,4 +8,4 @@ MYSQL_CONFIG = {
 
 # Football-Data.org API config (replace with your API key)
 FOOTBALL_DATA_API_URL = "https://api.football-data.org/v2/"
-FOOTBALL_DATA_API_KEY = "YOUR_API_KEY_HERE"  # Replace with your actual API key
+FOOTBALL_DATA_API_KEY = "YOUR_API_KEY_HERE"  

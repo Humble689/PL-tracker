@@ -42,20 +42,15 @@ def fetch_matches():
 
         match = {
             'Season': season_str,
-            # Note: The API returns team IDs. In a full implementation,
-            # you would map these to your Teams table.
             'HomeTeamID': m.get("homeTeam", {}).get("id"),
             'AwayTeamID': m.get("awayTeam", {}).get("id"),
-            # For scheduled matches, goals are 0.
             'HomeGoals': 0,
             'AwayGoals': 0,
-            # Dummy ranks – in a real project, compute or retrieve these from history
             'HomeTeamRank': 0,
             'AwayTeamRank': 0,
             'Result': 'Scheduled',
             'MatchDate': match_date
         }
-        # Only add match if date is parsed correctly
         if match_date:
             matches.append(match)
     return matches
@@ -70,7 +65,6 @@ def update_matches():
     cursor = cnx.cursor()
     
     for match in matches:
-        # Check if the match already exists
         check_query = """
             SELECT MatchID FROM Matches 
             WHERE MatchDate = %s AND HomeTeamID = %s AND AwayTeamID = %s
@@ -104,7 +98,6 @@ def predict_match_outcome(match):
       - If HomeTeamRank is lower than AwayTeamRank (i.e. a better rank), predict 'Home Win'.
       - If higher, predict 'Away Win'.
       - Otherwise, predict 'Draw'.
-    In a real system, use historical form, player stats, etc.
     """
     if match['HomeTeamRank'] < match['AwayTeamRank']:
         return 'Home Win'
@@ -114,7 +107,6 @@ def predict_match_outcome(match):
         return 'Draw'
 
 # --- Flask Routes ---
-
 @app.route('/')
 def index():
     """Display all matches."""
@@ -133,9 +125,9 @@ def update():
     update_matches()
     return redirect(url_for('index'))
 
-@app.route('/predict')
+@app.route('/predict', methods=['GET'])
 def predict():
-    """Display predictions for upcoming matches (today or in future)."""
+    """Display predictions for upcoming matches."""
     today = datetime.date.today()
     cnx = get_db_connection()
     cursor = cnx.cursor(dictionary=True)

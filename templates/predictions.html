@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Predictions</title>
+</head>
+<body>
+    <h1>Match Predictions</h1>
+    <ul>
+        {% for match in matches %}
+            <li>{{ match['HomeTeamID'] }} vs {{ match['AwayTeamID'] }}: Prediction - {{ match['Prediction'] }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
