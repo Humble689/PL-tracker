@@ -5,43 +5,30 @@ USE premier_league_stats;
 CREATE TABLE Teams (
     TeamID INT AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(100) NOT NULL,
-    ShortName VARCHAR(3) NOT NULL,
-    Rank INT
+    ShortName VARCHAR(3) NOT NULL
 );
 
--- Table to store players
-CREATE TABLE Players (
-    PlayerID INT AUTO_INCREMENT PRIMARY KEY,
-    TeamID INT,
-    Name VARCHAR(100) NOT NULL,
-    Position VARCHAR(3),
-    FOREIGN KEY (TeamID) REFERENCES Teams(TeamID)
-);
+-- Alter table to add Rank column
+ALTER TABLE Teams ADD `Rank` INT;
 
--- Table to store matches
-CREATE TABLE Matches (
-    MatchID INT AUTO_INCREMENT PRIMARY KEY,
-    Season VARCHAR(9),
-    HomeTeamID INT,
-    AwayTeamID INT,
-    HomeGoals INT,
-    AwayGoals INT,
-    HomeTeamRank INT,
-    AwayTeamRank INT,
-    Result VARCHAR(10),
-    MatchDate DATE,
-    FOREIGN KEY (HomeTeamID) REFERENCES Teams(TeamID),
-    FOREIGN KEY (AwayTeamID) REFERENCES Teams(TeamID)
-);
-
--- Table to store player statistics per match
-CREATE TABLE PlayerStats (
-    StatID INT AUTO_INCREMENT PRIMARY KEY,
-    MatchID INT,
-    PlayerID INT,
-    MinutesPlayed INT,
-    Goals INT,
-    Assists INT,
-    FOREIGN KEY (MatchID) REFERENCES Matches(MatchID),
-    FOREIGN KEY (PlayerID) REFERENCES Players(PlayerID)
-);
+-- Insert actual Premier League teams
+INSERT INTO Teams (Name, ShortName, `Rank`) VALUES
+('Arsenal', 'ARS', 1),
+('Aston Villa', 'AVL', 2),
+('Bournemouth', 'BOU', 3),
+('Brentford', 'BRE', 4),
+('Brighton & Hove Albion', 'BHA', 5),
+('Chelsea', 'CHE', 6),
+('Crystal Palace', 'CRY', 7),
+('Everton', 'EVE', 8),
+('Fulham', 'FUL', 9),
+('Leeds United', 'LEE', 10),
+('Leicester City', 'LEI', 11),
+('Liverpool', 'LIV', 12),
+('Manchester City', 'MCI', 13),
+('Manchester United', 'MUN', 14),
+('Newcastle United', 'NEW', 15),
+('Nottingham Forest', 'NFO', 16),
+('Tottenham Hotspur', 'TOT', 17),
+('West Ham United', 'WHU', 18),
+('Wolverhampton Wanderers', 'WOL', 19);

@@ -6,11 +6,27 @@
     <title>Match Predictions</title>
 </head>
 <body>
-    <h1>Match Predictions</h1>
-    <ul>
-        {% for match in matches %}
-            <li>{{ match['HomeTeamID'] }} vs {{ match['AwayTeamID'] }}: Prediction - {{ match['Prediction'] }}</li>
-        {% endfor %}
-    </ul>
+    <h1>Upcoming Match Predictions</h1>
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Match Date</th>
+                <th>Home Team</th>
+                <th>Away Team</th>
+                <th>Prediction</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+            <tr>
+                <td>{{ match.MatchDate }}</td>
+                <td>{{ match.HomeTeamID }}</td>
+                <td>{{ match.AwayTeamID }}</td>
+                <td>{{ match.Prediction }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

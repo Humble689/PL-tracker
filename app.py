@@ -1,7 +1,22 @@
 import mysql.connector
 from flask import Flask, render_template, redirect, url_for
+import mysql.connector
 import requests
 import datetime
+from config import MYSQL_CONFIG
+
+def fetch_teams():
+    connection = mysql.connector.connect(**MYSQL_CONFIG)
+    cursor = connection.cursor()
+    cursor.execute("SELECT Name, ShortName FROM Teams")
+    teams = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return teams
+
+# Example usage in prediction logic
+teams = fetch_teams()
+
 from config import MYSQL_CONFIG, FOOTBALL_DATA_API_URL, FOOTBALL_DATA_API_KEY
 
 app = Flask(__name__)

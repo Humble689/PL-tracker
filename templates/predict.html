@@ -6,26 +6,22 @@
 </head>
 <body>
     <h1>Upcoming Match Predictions</h1>
-    <p><a href="{{ url_for('index') }}">Home</a></p>
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
     <table border="1" cellpadding="5" cellspacing="0">
         <thead>
             <tr>
-                <th>MatchID</th>
-                <th>Season</th>
-                <th>HomeTeamID</th>
-                <th>AwayTeamID</th>
-                <th>MatchDate</th>
+                <th>Match Date</th>
+                <th>Home Team</th>
+                <th>Away Team</th>
                 <th>Prediction</th>
             </tr>
         </thead>
         <tbody>
             {% for match in matches %}
             <tr>
-                <td>{{ match.MatchID }}</td>
-                <td>{{ match.Season }}</td>
+                <td>{{ match.MatchDate }}</td>
                 <td>{{ match.HomeTeamID }}</td>
                 <td>{{ match.AwayTeamID }}</td>
-                <td>{{ match.MatchDate }}</td>
                 <td>{{ match.Prediction }}</td>
             </tr>
             {% endfor %}
