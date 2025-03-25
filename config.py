@@ -1,11 +1,18 @@
 # config.py
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Database configuration
 MYSQL_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'Postagemark8#',
-    'database': 'premier_league_stats'
+    'host': os.getenv('MYSQL_HOST', 'localhost'),
+    'user': os.getenv('MYSQL_USER', 'root'),
+    'password': os.getenv('MYSQL_PASSWORD', ''),
+    'database': os.getenv('MYSQL_DATABASE', 'premier_league')
 }
 
-# Football-Data.org API config (replace with your API key)
-FOOTBALL_DATA_API_URL = "https://api.football-data.org/v2/"
-FOOTBALL_DATA_API_KEY = "YOUR_API_KEY_HERE"  
+# Football Data API configuration
+FOOTBALL_DATA_API_URL = 'http://api.football-data.org/v4/'
+FOOTBALL_DATA_API_KEY = os.getenv('FOOTBALL_DATA_API_KEY', '')

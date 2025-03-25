@@ -1,44 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Premier League Matches</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% extends "base.html" %}
 
-</head>
-<body>
-    <h1>All Matches</h1>
-    <p>
-        <a href="{{ url_for('update') }}">Update Data</a> |
-        <a href="{{ url_for('predict') }}">View Predictions</a>
-    </p>
-    <table border="1" cellpadding="5" cellspacing="0">
-        <thead>
-            <tr>
-                <th>MatchID</th>
-                <th>Season</th>
-                <th>HomeTeamID</th>
-                <th>AwayTeamID</th>
-                <th>HomeGoals</th>
-                <th>AwayGoals</th>
-                <th>Result</th>
-                <th>MatchDate</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for match in matches %}
-            <tr>
-                <td>{{ match.MatchID }}</td>
-                <td>{{ match.Season }}</td>
-                <td>{{ match.HomeTeamID }}</td>
-                <td>{{ match.AwayTeamID }}</td>
-                <td>{{ match.HomeGoals }}</td>
-                <td>{{ match.AwayGoals }}</td>
-                <td>{{ match.Result }}</td>
-                <td>{{ match.MatchDate }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+{% block title %}Home - Premier League Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- League Table -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-trophy"></i> League Table</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Team</th>
+                                <th>P</th>
+                                <th>W</th>
+                                <th>D</th>
+                                <th>L</th>
+                                <th>GF</th>
+                                <th>GA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in league_table %}
+                            <tr>
+                                <td>{{ team.Rank }}</td>
+                                <td>{{ team.ShortName }}</td>
+                                <td>{{ team.Played }}</td>
+                                <td>{{ team.Won }}</td>
+                                <td>{{ team.Drawn }}</td>
+                                <td>{{ team.Lost }}</td>
+                                <td>{{ team.GoalsFor }}</td>
+                                <td>{{ team.GoalsAgainst }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matches -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-calendar"></i> Recent Matches</h5>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('update') }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-sync"></i> Update Matches
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Home</th>
+                                <th>Score</th>
+                                <th>Away</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in matches %}
+                            <tr>
+                                <td>{{ match.MatchDate.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ match.HomeTeamName }}</td>
+                                <td>
+                                    {% if match.Result != 'Scheduled' %}
+                                        {{ match.HomeGoals }} - {{ match.AwayGoals }}
+                                    {% else %}
+                                        vs
+                                    {% endif %}
+                                </td>
+                                <td>{{ match.AwayTeamName }}</td>
+                                <td>
+                                    <span class="badge {% if match.Result == 'Scheduled' %}bg-primary{% elif match.Result == 'Completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ match.Result }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Statistics Chart -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Team Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div id="teamStatsChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Create team statistics chart
+    const teams = {{ league_table|tojson|safe }};
+    const data = [{
+        type: 'bar',
+        x: teams.map(team => team.ShortName),
+        y: teams.map(team => team.GoalsFor),
+        name: 'Goals For',
+        marker: {color: '#1a237e'}
+    }, {
+        type: 'bar',
+        x: teams.map(team => team.ShortName),
+        y: teams.map(team => team.GoalsAgainst),
+        name: 'Goals Against',
+        marker: {color: '#d32f2f'}
+    }];
+
+    const layout = {
+        title: 'Goals For vs Goals Against',
+        barmode: 'group',
+        height: 400,
+        margin: {t: 30, b: 50, l: 50, r: 30}
+    };
+
+    Plotly.newPlot('teamStatsChart', data, layout);
+</script>
+{% endblock %}
