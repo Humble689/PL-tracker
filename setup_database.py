@@ -67,16 +67,17 @@ def setup_database():
             )
         """)
         
-        # Create predictions table
+        # Create user_predictions table
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS predictions (
+            CREATE TABLE IF NOT EXISTS user_predictions (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 match_id INT NOT NULL,
-                predicted_result VARCHAR(20) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                prediction VARCHAR(10) NOT NULL CHECK (prediction IN ('Home Win', 'Draw', 'Away Win')),
+                predicted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id),
-                FOREIGN KEY (match_id) REFERENCES matches(id)
+                FOREIGN KEY (match_id) REFERENCES matches(id),
+                UNIQUE KEY unique_user_match (user_id, match_id)
             )
         """)
         

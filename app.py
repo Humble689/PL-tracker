@@ -17,6 +17,7 @@ import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal
 import json
+from models import db, User, Match, Team, UserPrediction
 
 # Custom JSON encoder to handle Decimal values
 class CustomJSONEncoder(json.JSONEncoder):
@@ -34,6 +35,7 @@ app.config.from_object(Config)
 app.json_encoder = CustomJSONEncoder
 
 # Initialize extensions
+db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -62,22 +64,7 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    cnx = get_db_connection()
-    cursor = cnx.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT u.*, p.preferences 
-        FROM users u 
-        LEFT JOIN user_preferences p ON u.id = p.user_id 
-        WHERE u.id = %s
-    """, (user_id,))
-    user_data = cursor.fetchone()
-    cursor.close()
-    cnx.close()
-    
-    if user_data:
-        preferences = eval(user_data['preferences']) if user_data['preferences'] else {}
-        return User(user_data['id'], user_data['username'], user_data['email'], preferences)
-    return None
+    return User.query.get(int(user_id))
 
 # Enhanced database connection with connection pooling
 def get_db_connection():
@@ -438,47 +425,89 @@ def profile():
         flash('An error occurred while loading your profile.', 'error')
         return render_template('error.html')
 
+@app.route('/predictions')
+@login_required
+def predictions():
+    # Get upcoming matches that haven't been played yet
+    upcoming_matches = db.session.query(Match).filter(
+        Match.match_date >= datetime.now().date(),
+        Match.result == None
+    ).order_by(Match.match_date).all()
+    
+    # Get user's existing predictions
+    user_predictions = {
+        pred.match_id: pred.prediction 
+        for pred in db.session.query(UserPrediction).filter(
+            UserPrediction.user_id == current_user.id
+        ).all()
+    }
+    
+    return render_template('predictions.html', 
+                         matches=upcoming_matches,
+                         user_predictions=user_predictions)
+
 @app.route('/make_prediction/<int:match_id>', methods=['POST'])
 @login_required
 def make_prediction(match_id):
+    prediction = request.form.get('prediction')
+    
+    if not prediction or prediction not in ['Home Win', 'Draw', 'Away Win']:
+        flash('Invalid prediction', 'error')
+        return redirect(url_for('predictions'))
+    
+    # Check if match exists and hasn't been played yet
+    match = Match.query.get_or_404(match_id)
+    if match.result is not None:
+        flash('Cannot predict a match that has already been played', 'error')
+        return redirect(url_for('predictions'))
+    
+    # Check if user already made a prediction for this match
+    existing_prediction = UserPrediction.query.filter_by(
+        user_id=current_user.id,
+        match_id=match_id
+    ).first()
+    
+    if existing_prediction:
+        existing_prediction.prediction = prediction
+        existing_prediction.predicted_at = datetime.now()
+    else:
+        new_prediction = UserPrediction(
+            user_id=current_user.id,
+            match_id=match_id,
+            prediction=prediction,
+            predicted_at=datetime.now()
+        )
+        db.session.add(new_prediction)
+    
+    db.session.commit()
+    flash('Your prediction has been saved!', 'success')
+    return redirect(url_for('predictions'))
+
+def predict_match_outcome(match):
+    """
+    Predict the outcome of a match based on team rankings and historical data.
+    Returns a tuple of (prediction, confidence).
+    """
     try:
-        prediction = request.form.get('prediction')
-        if not prediction:
-            flash('No prediction selected', 'error')
-            return redirect(url_for('predict'))
-            
-        cnx = get_db_connection()
-        cursor = cnx.cursor()
+        # Get team rankings
+        home_rank = match['home_team_rank']
+        away_rank = match['away_team_rank']
         
-        # Check if prediction already exists
-        check_query = "SELECT id FROM predictions WHERE user_id = %s AND match_id = %s"
-        cursor.execute(check_query, (current_user.id, match_id))
-        if cursor.fetchone():
-            # Update existing prediction
-            update_query = """
-                UPDATE predictions 
-                SET predicted_result = %s, created_at = CURRENT_TIMESTAMP
-                WHERE user_id = %s AND match_id = %s
-            """
-            cursor.execute(update_query, (prediction, current_user.id, match_id))
+        # Simple prediction based on team rankings
+        if home_rank < away_rank:
+            prediction = 'Home Win'
+            confidence = 0.6
+        elif away_rank < home_rank:
+            prediction = 'Away Win'
+            confidence = 0.6
         else:
-            # Insert new prediction
-            insert_query = """
-                INSERT INTO predictions (user_id, match_id, predicted_result)
-                VALUES (%s, %s, %s)
-            """
-            cursor.execute(insert_query, (current_user.id, match_id, prediction))
+            prediction = 'Draw'
+            confidence = 0.4
             
-        cnx.commit()
-        cursor.close()
-        cnx.close()
-        
-        flash('Prediction saved successfully!', 'success')
+        return prediction, confidence
     except Exception as e:
-        logger.error(f"Error saving prediction: {e}")
-        flash('An error occurred while saving your prediction.', 'error')
-        
-    return redirect(url_for('predict'))
+        logger.error(f"Error in prediction: {e}")
+        return 'Unknown', 0.0
 
 if __name__ == '__main__':
     app.run(debug=True)

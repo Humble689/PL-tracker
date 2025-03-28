@@ -1,145 +1,77 @@
 {% extends "base.html" %}
 
-{% block title %}Predictions - Premier League Tracker{% endblock %}
+{% block title %}Match Predictions - Premier League Tracker{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-crystal-ball"></i> Upcoming Match Predictions</h5>
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Upcoming Matches & Predictions</h5>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Home</th>
-                                <th>vs</th>
-                                <th>Away</th>
-                                <th>Prediction</th>
-                                <th>Confidence</th>
-                                {% if current_user.is_authenticated %}
-                                <th>Your Prediction</th>
-                                {% endif %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for match in matches %}
-                            <tr>
-                                <td>{{ match.MatchDate.strftime('%Y-%m-%d') }}</td>
-                                <td>{{ match.HomeTeamName }}</td>
-                                <td>vs</td>
-                                <td>{{ match.AwayTeamName }}</td>
-                                <td>
-                                    <span class="badge {% if match.Prediction == 'Home Win' %}bg-success{% elif match.Prediction == 'Away Win' %}bg-danger{% else %}bg-warning{% endif %}">
-                                        {{ match.Prediction }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar {% if match.Prediction == 'Home Win' %}bg-success{% elif match.Prediction == 'Away Win' %}bg-danger{% else %}bg-warning{% endif %}"
-                                             role="progressbar"
-                                             style="width: {{ match.Confidence }}%"
-                                             aria-valuenow="{{ match.Confidence }}"
-                                             aria-valuemin="0"
-                                             aria-valuemax="100">
-                                            {{ match.Confidence }}%
-                                        </div>
-                                    </div>
-                                </td>
-                                {% if current_user.is_authenticated %}
-                                <td>
-                                    <form method="POST" action="{{ url_for('make_prediction', match_id=match.MatchID) }}" class="d-inline">
-                                        <div class="btn-group">
-                                            <button type="submit" name="prediction" value="Home Win" class="btn btn-sm btn-outline-success">Home</button>
-                                            <button type="submit" name="prediction" value="Draw" class="btn btn-sm btn-outline-warning">Draw</button>
-                                            <button type="submit" name="prediction" value="Away Win" class="btn btn-sm btn-outline-danger">Away</button>
-                                        </div>
-                                    </form>
-                                </td>
-                                {% endif %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="card-body">
+                {% if matches %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Home Team</th>
+                                    <th>vs</th>
+                                    <th>Away Team</th>
+                                    <th>Prediction</th>
+                                    <th>Confidence</th>
+                                    {% if current_user.is_authenticated %}
+                                    <th>Your Prediction</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in matches %}
+                                <tr>
+                                    <td>{{ match.match_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ match.HomeTeamName }}</td>
+                                    <td>vs</td>
+                                    <td>{{ match.AwayTeamName }}</td>
+                                    <td>
+                                        <span class="badge {% if match.Prediction == 'Home Win' %}bg-success{% elif match.Prediction == 'Away Win' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ match.Prediction }}
+                                        </span>
+                                    </td>
+                                    <td>{{ "%.1f"|format(match.Confidence * 100) }}%</td>
+                                    {% if current_user.is_authenticated %}
+                                    <td>
+                                        <form method="POST" action="{{ url_for('make_prediction', match_id=match.id) }}" class="d-inline">
+                                            <div class="btn-group">
+                                                <button type="submit" name="prediction" value="Home Win" class="btn btn-sm btn-outline-success">Home</button>
+                                                <button type="submit" name="prediction" value="Draw" class="btn btn-sm btn-outline-warning">Draw</button>
+                                                <button type="submit" name="prediction" value="Away Win" class="btn btn-sm btn-outline-danger">Away</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No upcoming matches found.
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Prediction Statistics -->
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Prediction Distribution</h5>
-            </div>
-            <div class="card-body">
-                <div id="predictionDistributionChart"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Prediction Accuracy</h5>
-            </div>
-            <div class="card-body">
-                <div id="predictionAccuracyChart"></div>
-            </div>
+{% if not current_user.is_authenticated %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> Please <a href="{{ url_for('login') }}">login</a> to make your own predictions!
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Create prediction distribution chart
-    const predictions = {{ matches|tojson|safe }};
-    const distribution = {
-        'Home Win': predictions.filter(m => m.Prediction === 'Home Win').length,
-        'Draw': predictions.filter(m => m.Prediction === 'Draw').length,
-        'Away Win': predictions.filter(m => m.Prediction === 'Away Win').length
-    };
-
-    const distributionData = [{
-        values: Object.values(distribution),
-        labels: Object.keys(distribution),
-        type: 'pie',
-        marker: {
-            colors: ['#28a745', '#ffc107', '#dc3545']
-        }
-    }];
-
-    const distributionLayout = {
-        title: 'Prediction Distribution',
-        height: 300,
-        margin: {t: 30, b: 30, l: 30, r: 30}
-    };
-
-    Plotly.newPlot('predictionDistributionChart', distributionData, distributionLayout);
-
-    // Create prediction accuracy chart
-    const accuracyData = [{
-        type: 'scatter',
-        x: predictions.map(m => m.MatchDate),
-        y: predictions.map(m => m.Confidence),
-        mode: 'lines+markers',
-        name: 'Confidence Level',
-        line: {color: '#1a237e'}
-    }];
-
-    const accuracyLayout = {
-        title: 'Prediction Confidence Over Time',
-        xaxis: {title: 'Match Date'},
-        yaxis: {title: 'Confidence (%)'},
-        height: 300,
-        margin: {t: 30, b: 50, l: 50, r: 30}
-    };
-
-    Plotly.newPlot('predictionAccuracyChart', accuracyData, accuracyLayout);
-</script>
+{% endif %}
 {% endblock %}

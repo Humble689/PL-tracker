@@ -44,6 +44,16 @@ CREATE TABLE IF NOT EXISTS predictions (
     FOREIGN KEY (match_id) REFERENCES matches(id)
 );
 
+-- Create user_predictions table
+CREATE TABLE IF NOT EXISTS user_predictions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    match_id INTEGER NOT NULL REFERENCES matches(id),
+    prediction VARCHAR(10) NOT NULL CHECK (prediction IN ('Home Win', 'Draw', 'Away Win')),
+    predicted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, match_id)
+);
+
 -- Insert some sample teams
 INSERT INTO teams (name, short_name, team_rank) VALUES
 ('Arsenal', 'ARS', 1),
