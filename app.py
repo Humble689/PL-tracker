@@ -15,6 +15,15 @@ import time
 import hashlib
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
+from decimal import Decimal
+import json
+
+# Custom JSON encoder to handle Decimal values
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.json_encoder = CustomJSONEncoder
 
 # Initialize extensions
 login_manager = LoginManager()
