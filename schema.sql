@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS teams (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     short_name VARCHAR(3) NOT NULL,
-    rank INT NOT NULL,
+    team_rank INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS predictions (
 );
 
 -- Insert some sample teams
-INSERT INTO teams (name, short_name, rank) VALUES
+INSERT INTO teams (name, short_name, team_rank) VALUES
 ('Arsenal', 'ARS', 1),
 ('Aston Villa', 'AVL', 2),
 ('Brighton', 'BHA', 3),

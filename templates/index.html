@@ -28,8 +28,8 @@
                         <tbody>
                             {% for team in league_table %}
                             <tr>
-                                <td>{{ team.Rank }}</td>
-                                <td>{{ team.ShortName }}</td>
+                                <td>{{ team.team_rank }}</td>
+                                <td>{{ team.short_name }}</td>
                                 <td>{{ team.Played }}</td>
                                 <td>{{ team.Won }}</td>
                                 <td>{{ team.Drawn }}</td>
@@ -71,19 +71,19 @@
                         <tbody>
                             {% for match in matches %}
                             <tr>
-                                <td>{{ match.MatchDate.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ match.match_date.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ match.HomeTeamName }}</td>
                                 <td>
-                                    {% if match.Result != 'Scheduled' %}
-                                        {{ match.HomeGoals }} - {{ match.AwayGoals }}
+                                    {% if match.result != 'Scheduled' %}
+                                        {{ match.home_goals }} - {{ match.away_goals }}
                                     {% else %}
                                         vs
                                     {% endif %}
                                 </td>
                                 <td>{{ match.AwayTeamName }}</td>
                                 <td>
-                                    <span class="badge {% if match.Result == 'Scheduled' %}bg-primary{% elif match.Result == 'Completed' %}bg-success{% else %}bg-warning{% endif %}">
-                                        {{ match.Result }}
+                                    <span class="badge {% if match.result == 'Scheduled' %}bg-primary{% elif match.result == 'Completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ match.result }}
                                     </span>
                                 </td>
                             </tr>
@@ -117,13 +117,13 @@
     const teams = {{ league_table|tojson|safe }};
     const data = [{
         type: 'bar',
-        x: teams.map(team => team.ShortName),
+        x: teams.map(team => team.short_name),
         y: teams.map(team => team.GoalsFor),
         name: 'Goals For',
         marker: {color: '#1a237e'}
     }, {
         type: 'bar',
-        x: teams.map(team => team.ShortName),
+        x: teams.map(team => team.short_name),
         y: teams.map(team => team.GoalsAgainst),
         name: 'Goals Against',
         marker: {color: '#d32f2f'}
