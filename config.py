@@ -12,7 +12,6 @@ MYSQL_CONFIG = {
     'user': os.getenv('MYSQL_USER', 'root'),
     'password': os.getenv('MYSQL_PASSWORD', ''),
     'database': os.getenv('MYSQL_DATABASE', 'premier_league'),
-    'pool_name': 'mypool',
     'pool_size': 5
 }
 
@@ -32,7 +31,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': MYSQL_CONFIG['pool_size'],
-        'pool_name': MYSQL_CONFIG['pool_name']
+        'pool_recycle': 3600,
+        'pool_pre_ping': True
     }
     
     # Rate limiting

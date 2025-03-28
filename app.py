@@ -1,6 +1,6 @@
 import mysql.connector
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
@@ -47,20 +47,6 @@ limiter = Limiter(
 )
 
 cache = Cache(app)
-
-# User model with enhanced security
-class User(UserMixin):
-    def __init__(self, user_id, username, email, preferences=None):
-        self.id = user_id
-        self.username = username
-        self.email = email
-        self.preferences = preferences or {}
-
-    def get_preference(self, key, default=None):
-        return self.preferences.get(key, default)
-
-    def set_preference(self, key, value):
-        self.preferences[key] = value
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -272,15 +258,9 @@ def login():
         password = request.form.get('password')
         
         try:
-            cnx = get_db_connection()
-            cursor = cnx.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-            user_data = cursor.fetchone()
-            cursor.close()
-            cnx.close()
+            user = User.query.filter_by(username=username).first()
             
-            if user_data and verify_password(user_data['password_hash'], password):
-                user = User(user_data['id'], user_data['username'], user_data['email'])
+            if user and user.check_password(password):
                 login_user(user)
                 return redirect(url_for('index'))
             else:
@@ -351,37 +331,31 @@ def register():
             return redirect(url_for('register'))
         
         try:
-            cnx = get_db_connection()
-            cursor = cnx.cursor(dictionary=True)
-            
             # Check if username exists
-            cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
-            if cursor.fetchone():
+            if User.query.filter_by(username=username).first():
                 flash('Username already exists', 'error')
                 return redirect(url_for('register'))
             
             # Check if email exists
-            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-            if cursor.fetchone():
+            if User.query.filter_by(email=email).first():
                 flash('Email already exists', 'error')
                 return redirect(url_for('register'))
             
-            # Insert new user
-            insert_query = """
-                INSERT INTO users (username, email, password_hash)
-                VALUES (%s, %s, %s)
-            """
-            cursor.execute(insert_query, (username, email, hash_password(password)))
-            cnx.commit()
-            
-            cursor.close()
-            cnx.close()
+            # Create new user
+            new_user = User(
+                username=username,
+                email=email
+            )
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
             
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
             
         except Exception as e:
             logger.error(f"Registration error: {e}")
+            db.session.rollback()
             flash('An error occurred during registration.', 'error')
             
     return render_template('register.html')
@@ -509,5 +483,11 @@ def predict_match_outcome(match):
         logger.error(f"Error in prediction: {e}")
         return 'Unknown', 0.0
 
+def init_db():
+    """Initialize the database tables."""
+    with app.app_context():
+        db.create_all()
+
 if __name__ == '__main__':
+    init_db()  # Initialize database tables
     app.run(debug=True)
