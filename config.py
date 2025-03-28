@@ -27,6 +27,14 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
+    # SQLAlchemy configuration
+    SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{MYSQL_CONFIG['user']}:{MYSQL_CONFIG['password']}@{MYSQL_CONFIG['host']}/{MYSQL_CONFIG['database']}"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': MYSQL_CONFIG['pool_size'],
+        'pool_name': MYSQL_CONFIG['pool_name']
+    }
+    
     # Rate limiting
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URL = "memory://"
