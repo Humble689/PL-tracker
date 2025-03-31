@@ -151,7 +151,7 @@ def fetch_matches():
             except Exception:
                 match_date = None
 
-            # Get match  re
+            # Get match  resul
             result = 'Scheduled'
             if m.get('status') == 'FINISHED':
                 home_goals = m.get('score', {}).get('fullTime', {}).get('home', 0)
