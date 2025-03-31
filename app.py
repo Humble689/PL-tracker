@@ -70,14 +70,70 @@ def verify_password(stored_hash, password):
     salt, hash_value = stored_hash.split(':')
     return check_password_hash(hash_value, password + salt)
 
-# Cached API calls
+def update_matches():
+    """Fetch and update matches from the Football-Data.org API."""
+    try:
+        # Fetch matches from API
+        matches = fetch_matches()
+        
+        cnx = get_db_connection()
+        cursor = cnx.cursor()
+        
+        # Update teams first
+        teams_data = set()
+        for match in matches:
+            teams_data.add((match['HomeTeamID'], match['HomeTeamName']))
+            teams_data.add((match['AwayTeamID'], match['AwayTeamName']))
+        
+        # Insert or update teams
+        for team_id, team_name in teams_data:
+            cursor.execute("""
+                INSERT INTO teams (id, name, short_name)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE name = VALUES(name)
+            """, (team_id, team_name, team_name[:3]))
+        
+        # Update matches
+        for match in matches:
+            cursor.execute("""
+                INSERT INTO matches (
+                    id, match_date, home_team_id, away_team_id,
+                    home_goals, away_goals, result
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    match_date = VALUES(match_date),
+                    home_goals = VALUES(home_goals),
+                    away_goals = VALUES(away_goals),
+                    result = VALUES(result)
+            """, (
+                match['id'],
+                match['MatchDate'],
+                match['HomeTeamID'],
+                match['AwayTeamID'],
+                match['HomeGoals'],
+                match['AwayGoals'],
+                match['Result']
+            ))
+        
+        cnx.commit()
+        cursor.close()
+        cnx.close()
+        
+        logger.info("Matches updated successfully")
+        
+    except Exception as e:
+        logger.error(f"Error updating matches: {e}")
+        raise
+
+# Update the fetch_matches function to include more match data
 @cache.memoize(timeout=300)
 def fetch_matches():
     """
     Fetch real match data from Football-Data.org API with caching.
     """
     headers = {"X-Auth-Token": FOOTBALL_DATA_API_KEY}
-    endpoint = f"{FOOTBALL_DATA_API_URL}competitions/PL/matches?status=SCHEDULED"
+    endpoint = f"{FOOTBALL_DATA_API_URL}competitions/PL/matches"
     
     try:
         response = requests.get(endpoint, headers=headers)
@@ -95,19 +151,69 @@ def fetch_matches():
             except Exception:
                 match_date = None
 
+            # Get match result 
+            result = 'Scheduled'
+            if m.get('status') == 'FINISHED':
+                home_goals = m.get('score', {}).get('fullTime', {}).get('home', 0)
+                away_goals = m.get('score', {}).get('fullTime', {}).get('away', 0)
+                if home_goals > away_goals:
+                    result = 'Home Win'
+                elif away_goals > home_goals:
+                    result = 'Away Win'
+                else:
+                    result = 'Draw'
+            elif m.get('status') == 'IN_PROGRESS':
+                result = 'Live'
+
             match = {
+                'id': m.get('id'),
                 'Season': season_str,
                 'HomeTeamID': m.get("homeTeam", {}).get("id"),
                 'AwayTeamID': m.get("awayTeam", {}).get("id"),
-                'HomeGoals': 0,
-                'AwayGoals': 0,
-                'HomeTeamRank': 0,
-                'AwayTeamRank': 0,
-                'Result': 'Scheduled',
-                'MatchDate': match_date
+                'HomeTeamName': m.get("homeTeam", {}).get("name"),
+                'AwayTeamName': m.get("awayTeam", {}).get("name"),
+                'HomeGoals': m.get('score', {}).get('fullTime', {}).get('home', 0),
+                'AwayGoals': m.get('score', {}).get('fullTime', {}).get('away', 0),
+                'HomeTeamRank': 0,  # Will be updated from league table
+                'AwayTeamRank': 0,  # Will be updated from league table
+                'Result': result,
+                'MatchDate': match_date,
+                'Status': m.get('status', 'SCHEDULED')
             }
-            if match_date:
-                matches.append(match)
+            matches.append(match)
+        
+        # Update team rankings
+        cnx = get_db_connection()
+        cursor = cnx.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT t.id, t.name,
+                   COUNT(m.id) as Played,
+                   SUM(CASE WHEN (m.home_team_id = t.id AND m.home_goals > m.away_goals) 
+                        OR (m.away_team_id = t.id AND m.away_goals > m.home_goals) THEN 1 ELSE 0 END) as Won,
+                   SUM(CASE WHEN m.home_goals = m.away_goals THEN 1 ELSE 0 END) as Drawn,
+                   SUM(CASE WHEN (m.home_team_id = t.id AND m.home_goals < m.away_goals) 
+                        OR (m.away_team_id = t.id AND m.away_goals < m.home_goals) THEN 1 ELSE 0 END) as Lost,
+                   SUM(CASE WHEN m.home_team_id = t.id THEN m.home_goals ELSE m.away_goals END) as GoalsFor,
+                   SUM(CASE WHEN m.home_team_id = t.id THEN m.away_goals ELSE m.home_goals END) as GoalsAgainst,
+                   SUM(CASE WHEN (m.home_team_id = t.id AND m.home_goals > m.away_goals) 
+                        OR (m.away_team_id = t.id AND m.away_goals > m.home_goals) THEN 3
+                        WHEN m.home_goals = m.away_goals THEN 1 ELSE 0 END) as Points
+            FROM teams t
+            LEFT JOIN matches m ON t.id = m.home_team_id OR t.id = m.away_team_id
+            GROUP BY t.id
+            ORDER BY Points DESC, (GoalsFor - GoalsAgainst) DESC
+        """)
+        team_rankings = {team['id']: idx + 1 for idx, team in enumerate(cursor.fetchall())}
+        
+        cursor.close()
+        cnx.close()
+        
+        # Update match rankings
+        for match in matches:
+            match['HomeTeamRank'] = team_rankings.get(match['HomeTeamID'], 0)
+            match['AwayTeamRank'] = team_rankings.get(match['AwayTeamID'], 0)
+        
         return matches
     except requests.exceptions.RequestException as e:
         logger.error(f"API request error: {e}")
@@ -119,6 +225,9 @@ def fetch_matches():
 def index():
     """Display all matches and league table with pagination."""
     try:
+        # Update matches to ensure fresh data
+        update_matches()
+        
         page = request.args.get('page', 1, type=int)
         per_page = app.config['ITEMS_PER_PAGE']
         
@@ -129,7 +238,7 @@ def index():
         cursor.execute("SELECT COUNT(*) as total FROM matches")
         total_matches = cursor.fetchone()['total']
         
-        # Get paginated matches
+        # Get paginated matches, ordered by match date
         matches_query = """
             SELECT m.*, 
                    ht.name as HomeTeamName, at.name as AwayTeamName,
