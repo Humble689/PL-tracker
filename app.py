@@ -164,7 +164,7 @@ def fetch_matches():
                     result = 'Draw'
             elif m.get('status') == 'IN_PROGRESS':
                 result = 'Live'
-
+ 
             match = {
                 'id': m.get('id'),
                 'Season': season_str,
