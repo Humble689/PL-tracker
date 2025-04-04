@@ -30,12 +30,16 @@
                             <tr>
                                 <td>{{ team.team_rank }}</td>
                                 <td>{{ team.short_name }}</td>
-                                <td>{{ team.Played }}</td>
-                                <td>{{ team.Won }}</td>
-                                <td>{{ team.Drawn }}</td>
-                                <td>{{ team.Lost }}</td>
-                                <td>{{ team.GoalsFor }}</td>
-                                <td>{{ team.GoalsAgainst }}</td>
+                                <td>{{ team.Played or 0 }}</td>
+                                <td>{{ team.Won or 0 }}</td>
+                                <td>{{ team.Drawn or 0 }}</td>
+                                <td>{{ team.Lost or 0 }}</td>
+                                <td>{{ team.GoalsFor or 0 }}</td>
+                                <td>{{ team.GoalsAgainst or 0 }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">No league data available</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -75,7 +79,7 @@
                                 <td>{{ match.HomeTeamName }}</td>
                                 <td>
                                     {% if match.result != 'Scheduled' %}
-                                        {{ match.home_goals }} - {{ match.away_goals }}
+                                        {{ match.home_score or 0 }} - {{ match.away_score or 0 }}
                                     {% else %}
                                         vs
                                     {% endif %}
@@ -83,9 +87,13 @@
                                 <td>{{ match.AwayTeamName }}</td>
                                 <td>
                                     <span class="badge {% if match.result == 'Scheduled' %}bg-primary{% elif match.result == 'Completed' %}bg-success{% else %}bg-warning{% endif %}">
-                                        {{ match.result }}
+                                        {{ match.result or 'Scheduled' }}
                                     </span>
                                 </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">No matches available</td>
                             </tr>
                             {% endfor %}
                         </tbody>
