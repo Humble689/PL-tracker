@@ -20,6 +20,12 @@ This project is a Flask web application that fetches real match data from the Fo
    pip install -r requirement.txt
    ```
 
+## Features
+- Fetches scheduled match data from the Football-Data.org API.
+- Displays all matches in a user-friendly table format.
+- Provides an option to update match data.
+- Displays predictions for upcoming matches.
+
 
 
 ## Usage
