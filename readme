@@ -3,7 +3,6 @@
 ## Description
 This project is a Flask web application that fetches real match data from the Football-Data.org API for the English Premier League. It allows users to view scheduled matches, update match data, and see predictions for upcoming matches based on dummy prediction logic.
 
-
 ## Installation
 1. Clone the repository:
    ```bash
@@ -20,8 +19,6 @@ This project is a Flask web application that fetches real match data from the Fo
 - Displays all matches in a user-friendly table format.
 - Provides an option to update match data.
 - Displays predictions for upcoming matches.
-
-
 
 ## Usage
 1. Run the application:
